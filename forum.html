@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arakha Forum - Live</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        body { background: #050505; color: #ccc; font-family: sans-serif; margin: 0; }
+        .nav { 
+            background: rgba(10,10,10,0.9); padding: 15px; 
+            border-bottom: 1px solid #00ff41; position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .container { max-width: 600px; margin: 20px auto; padding: 15px; }
+        
+        .post-input { 
+            background: #0a0a0a; padding: 20px; border: 1px solid #222; 
+            border-radius: 12px; margin-bottom: 30px;
+        }
+        textarea { 
+            width: 100%; background: #000; border: 1px solid #333; 
+            color: #fff; padding: 15px; border-radius: 8px; outline: none; resize: none;
+        }
+        
+        .card { 
+            background: #0d0d0d; padding: 20px; border-radius: 12px; 
+            margin-bottom: 20px; border: 1px solid #1a1a1a;
+            animation: slideIn 0.5s ease-out; /* New post animation */
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .ai-box { 
+            background: rgba(0, 255, 65, 0.03); border-left: 3px solid #00ff41; 
+            padding: 15px; margin-top: 15px; border-radius: 4px; font-style: italic;
+        }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+        <b style="color:#00ff41; letter-spacing: 2px;">ARAKHA_FORUM</b>
+        <button onclick="logout()" style="background:transparent; color:#ff4444; border:1px solid #ff4444; padding:5px 10px;">LOGOUT</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="post-input">
+        <textarea id="c" rows="3" placeholder="ဘာများပြောချင်ပါသလဲ..."></textarea>
+        <button id="post-btn" onclick="post()" style="margin-top:10px; width: 100%;">POST</button>
+    </div>
+    <div id="feed"></div>
+</div>
+
+<script>
+    const config = {
+        apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
+        authDomain: "firstarakha.firebaseapp.com",
+        projectId: "firstarakha",
+        databaseURL: "https://firstarakha-default-rtdb.asia-southeast1.firebasedatabase.app",
+        appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
+    };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+    let currentUsername = "";
+
+    async function askGemini(q) {
+        try {
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: "မင်းနာမည်က ဗျာလ်ပါ။ ရက္ခိုင်လိုပဲ တိုတိုရှင်းရှင်းဖြေပါ။ မေးခွန်း - " + q })
+            });
+            const data = await res.json();
+            return data.reply;
+        } catch (e) { return "ဗျာလ် အိပ်ငိုက်နီပါရေ..."; }
+    }
+
+    async function post() {
+        const c = document.getElementById('c').value;
+        if(c) {
+            const btn = document.getElementById('post-btn');
+            btn.innerText = "ဗျာလ် စဉ်းစားနီပါရေ..."; btn.disabled = true;
+            const ai = await askGemini(c);
+            db.ref("posts").push({ u: currentUsername, c: c, ai: ai, time: Date.now() });
+            document.getElementById('c').value = "";
+            btn.innerText = "POST"; btn.disabled = false;
+        }
+    }
+
+    function load() {
+        db.ref("posts").limitToLast(20).on("value", s => {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            let items = [];
+            s.forEach(child => { items.push(child.val()); });
+            items.reverse().forEach(p => {
+                feed.innerHTML += `
+                    <div class="card">
+                        <div style="color:#00ff41; font-size:12px;">@${p.u}</div>
+                        <p>${p.c}</p>
+                        <div class="ai-box"><b style="color:#00ff41">🤖 ဗျာလ်:</b> ${p.ai}</div>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) window.location.href = "index.html";
+        else {
+            db.ref('users/' + user.uid).once('value', s => {
+                currentUsername = s.val() ? s.val().username : "User";
+                load();
+            });
+        }
+    });
+
+    function logout() { firebase.auth().signOut(); }
+</script>
+</body>
+</html>
