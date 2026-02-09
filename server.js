@@ -1,33 +1,34 @@
-require('dotenv').config();
 const express = require('express');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require('path');
+require('dotenv').config();
+
 const app = express();
-
 app.use(express.json());
-app.use(express.static('.'));
 
-// --- ဒီအပိုင်းက ကိုကို့ဆီမှာ မပါခဲ့တဲ့ AI ချက်တဲ့ အပိုင်းပါ ---
+// HTML ဖိုင်တွေရှိတဲ့ နေရာကို Render သိအောင် လုပ်ပေးခြင်း
+app.use(express.static(path.join(__dirname)));
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/chat', async (req, res) => {
     try {
-        // Gemini 1.5 Flash က ပိုမြန်ပြီး ဈေးသက်သာပါတယ်
+        const { message } = req.body;
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
-        const result = await model.generateContent(req.body.message);
+        const result = await model.generateContent(message);
         const response = await result.response;
         const text = response.text();
         
         res.json({ reply: text });
     } catch (error) {
         console.error("AI Error:", error);
-        res.status(500).json({ error: "ဗျာလ် စဉ်းစားလို့ မရဖြစ်နေတယ် ကိုကို။" });
+        res.status(500).json({ reply: "ဗျာလ် အနားယူနီပါရေ... (Backend Error)" });
     }
 });
 
-// Website ရဲ့ အဓိက စာမျက်နှာတွေကို လမ်းကြောင်းပေးတာ
-app.get('/', (req, res) => {
+// မည်သည့် URL မဆို index.html ကို ပြပေးရန်
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
