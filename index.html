@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arakha Tech Hub - Welcome</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --neon: #00ff41; --bg: #050505; }
+        body { 
+            background: var(--bg); color: var(--neon); 
+            font-family: 'Courier New', monospace; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+        /* Fade-in Animation for whole page */
+        .container { animation: fadeIn 1.5s ease-in-out; text-align: center; }
+        
+        .card { 
+            background: #0a0a0a; padding: 40px; 
+            border: 1px solid #111; border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            position: relative;
+        }
+        /* Scanning Line Effect */
+        .card::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--neon); opacity: 0.3; animation: scan 3s infinite linear;
+        }
+        input { 
+            width: 100%; background: #000; border: 1px solid #222; 
+            color: var(--neon); padding: 12px; margin-bottom: 15px; 
+            outline: none; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(0, 255, 65, 0.3); }
+        
+        button { 
+            width: 100%; background: var(--neon); color: #000; 
+            border: none; padding: 12px; cursor: pointer; 
+            font-weight: bold; text-transform: uppercase;
+            transition: 0.3s;
+        }
+        button:hover { box-shadow: 0 0 20px var(--neon); transform: translateY(-2px); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2 style="letter-spacing: 5px;">ARAKHA_HUB</h2>
+            <p id="status-text" style="font-size: 12px; color: #555;">SYSTEM_READY...</p>
+            <div id="reg-fields" style="display:none;">
+                <input type="text" id="username" placeholder="[USER_NAME]">
+            </div>
+            <input type="email" id="email" placeholder="[EMAIL_ADDRESS]">
+            <input type="password" id="pass" placeholder="[PASSWORD]">
+            <button onclick="handleAuth()" id="main-btn">ACCESS_GRANTED</button>
+            <p onclick="toggleForm()" style="font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 15px;" id="toggle-text">CREATE_NEW_ID</p>
+        </div>
+    </div>
+
+<script>
+    const config = {
+        apiKey: "AIzaSyCpIv3avDNRYNrmrzKdMqfnMdNzBGZAPow",
+        authDomain: "firstarakha.firebaseapp.com",
+        databaseURL: "https://firstarakha-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "firstarakha",
+        appId: "1:4263070909:web:ef4e4a2c0891be1f49bbd4"
+    };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+    let isRegister = false;
+
+    function toggleForm() {
+        isRegister = !isRegister;
+        document.getElementById('reg-fields').style.display = isRegister ? 'block' : 'none';
+        document.getElementById('main-btn').innerText = isRegister ? 'INITIALIZE_ID' : 'ACCESS_GRANTED';
+        document.getElementById('toggle-text').innerText = isRegister ? 'ALREADY_HAVE_ID?_LOGIN' : 'CREATE_NEW_ID';
+    }
+
+    function handleAuth() {
+        const e = document.getElementById('email').value, p = document.getElementById('pass').value;
+        if (isRegister) {
+            const u = document.getElementById('username').value;
+            firebase.auth().createUserWithEmailAndPassword(e, p).then(res => {
+                db.ref('users/' + res.user.uid).set({ username: u });
+            }).catch(err => alert(err.message));
+        } else {
+            firebase.auth().signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
+        }
+    }
+
+    firebase.auth().onAuthStateChanged(user => { if(user) window.location.href = "forum.html"; });
+</script>
+</body>
+</html>
