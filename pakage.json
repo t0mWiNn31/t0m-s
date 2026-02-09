@@ -1,10 +1,18 @@
 {
-  "name": "arakha-forum",
+  "name": "arakha-hub-live",
   "version": "1.0.0",
+  "description": "Arakha Forum with Live Animations",
   "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "@google/generative-ai": "^0.1.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "body-parser": "^1.20.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
